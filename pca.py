@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -9,6 +10,13 @@ from sklearn.decomposition import PCA
 # ======================
 
 plt.rcParams["font.family"] = "Noto Sans CJK JP"
+
+# ======================
+# 画像保存先
+# ======================
+
+output_dir = Path("pca_images")
+output_dir.mkdir(exist_ok=True)
 
 # ======================
 # CSV読み込み
@@ -190,6 +198,12 @@ plt.grid()
 
 plt.legend()
 
+plt.savefig(
+    output_dir / "pca_scatter.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
 plt.show()
 
 # ======================
@@ -208,6 +222,12 @@ plt.xlabel("Loading")
 
 plt.grid()
 
+plt.savefig(
+    output_dir / "pc1_loading.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
 plt.show()
 
 # ======================
@@ -225,6 +245,12 @@ plt.title("PC2 Loading")
 plt.xlabel("Loading")
 
 plt.grid()
+
+plt.savefig(
+    output_dir / "pc2_loading.png",
+    dpi=300,
+    bbox_inches="tight"
+)
 
 plt.show()
 
@@ -284,6 +310,12 @@ plt.title("チーム重心 PCA")
 
 plt.grid()
 
+plt.savefig(
+    output_dir / "team_center_pca.png",
+    dpi=300,
+    bbox_inches="tight"
+)
+
 plt.show()
 
 # ======================
@@ -313,3 +345,7 @@ print("======================")
 print("・pca_result.csv")
 print("・pca_loading.csv")
 print("・team_center.csv")
+print("・pca_images/pca_scatter.png")
+print("・pca_images/pc1_loading.png")
+print("・pca_images/pc2_loading.png")
+print("・pca_images/team_center_pca.png")
