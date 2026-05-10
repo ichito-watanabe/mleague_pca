@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 from pathlib import Path
 
 from sklearn.preprocessing import StandardScaler
@@ -9,7 +10,23 @@ from sklearn.decomposition import PCA
 # 日本語フォント
 # ======================
 
-plt.rcParams["font.family"] = "Noto Sans CJK JP"
+font_candidates = [
+    Path("C:/Windows/Fonts/NotoSansJP-VF.ttf"),
+    Path("C:/Windows/Fonts/YuGothM.ttc"),
+    Path("C:/Windows/Fonts/meiryo.ttc"),
+    Path("C:/Windows/Fonts/msgothic.ttc"),
+]
+
+for font_path in font_candidates:
+    if font_path.exists():
+        font_manager.fontManager.addfont(font_path)
+        font_name = font_manager.FontProperties(
+            fname=font_path
+        ).get_name()
+        plt.rcParams["font.family"] = font_name
+        break
+
+plt.rcParams["axes.unicode_minus"] = False
 
 # ======================
 # 画像保存先
@@ -17,6 +34,23 @@ plt.rcParams["font.family"] = "Noto Sans CJK JP"
 
 output_dir = Path("pca_images")
 output_dir.mkdir(exist_ok=True)
+
+# ======================
+# チームカラー
+# ======================
+
+team_colors = {
+    "EARTH JETS": "#e60012",
+    "赤坂ドリブンズ": "#b51f32",
+    "EX風林火山": "#d61718",
+    "KADOKAWAサクラナイツ": "#f08aaa",
+    "KONAMI 麻雀格闘倶楽部": "#231815",
+    "渋谷ABEMAS": "#bfa566",
+    "セガサミーフェニックス": "#0081cc",
+    "TEAM RAIDEN / 雷電": "#fbc600",
+    "BEAST X": "#003050",
+    "U-NEXT Pirates": "#008fd0",
+}
 
 # ======================
 # CSV読み込み
@@ -45,6 +79,11 @@ features = [
 # ======================
 
 X = df[features]
+
+# PCAに使ったデータを確認用に保存
+pca_input_df = df[
+    ["選手名", "チーム名"] + features
+]
 
 # ======================
 # 標準化
@@ -158,6 +197,9 @@ for team in pca_df["チーム名"].unique():
         temp["PC1"],
         temp["PC2"],
         s=120,
+        color=team_colors.get(team, "gray"),
+        edgecolors="white",
+        linewidths=0.8,
         label=team,
         alpha=0.8
     )
@@ -276,13 +318,15 @@ print(team_center)
 
 plt.figure(figsize=(10, 8))
 
-plt.scatter(
-    team_center["PC1"],
-    team_center["PC2"],
-    s=250
-)
-
 for team, row in team_center.iterrows():
+    plt.scatter(
+        row["PC1"],
+        row["PC2"],
+        s=250,
+        color=team_colors.get(team, "gray"),
+        edgecolors="white",
+        linewidths=1.0
+    )
 
     plt.text(
         row["PC1"],
@@ -322,30 +366,59 @@ plt.show()
 # CSV保存
 # ======================
 
-pca_df.to_csv(
-    "pca_result.csv",
-    index=False,
-    encoding="utf-8-sig"
-)
+csv_outputs = [
+    (
+        pca_input_df,
+        "pca_input_data.csv",
+        {"index": False}
+    ),
+    (
+        pca_df,
+        "pca_result.csv",
+        {"index": False}
+    ),
+    (
+        loading,
+        "pca_loading.csv",
+        {}
+    ),
+    (
+        team_center,
+        "team_center.csv",
+        {}
+    ),
+]
 
-loading.to_csv(
-    "pca_loading.csv",
-    encoding="utf-8-sig"
-)
+saved_csv_files = []
+failed_csv_files = []
 
-team_center.to_csv(
-    "team_center.csv",
-    encoding="utf-8-sig"
-)
+for output_df, output_path, options in csv_outputs:
+    try:
+        output_df.to_csv(
+            output_path,
+            encoding="utf-8-sig",
+            **options
+        )
+        saved_csv_files.append(output_path)
+    except PermissionError:
+        failed_csv_files.append(output_path)
 
 print("\n======================")
 print("保存完了")
 print("======================")
 
-print("・pca_result.csv")
-print("・pca_loading.csv")
-print("・team_center.csv")
+for saved_csv_file in saved_csv_files:
+    print(f"・{saved_csv_file}")
+
 print("・pca_images/pca_scatter.png")
 print("・pca_images/pc1_loading.png")
 print("・pca_images/pc2_loading.png")
 print("・pca_images/team_center_pca.png")
+
+if failed_csv_files:
+    print("\n======================")
+    print("保存できなかったCSV")
+    print("======================")
+    for failed_csv_file in failed_csv_files:
+        print(f"・{failed_csv_file}")
+    print("Excelなどで開いている場合は閉じてから再実行してください。")
